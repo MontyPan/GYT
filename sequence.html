@@ -1,0 +1,97 @@
+<html>
+<script src="https://bramp.github.io/js-sequence-diagrams/js/jquery.min.js"></script>
+<script src="https://d1n0x3qji82z53.cloudfront.net/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://bramp.github.io/js-sequence-diagrams/js/raphael-min.js"></script>
+<script src="https://bramp.github.io/js-sequence-diagrams/js/underscore-min.js"></script>
+<script src="https://bramp.github.io/js-sequence-diagrams/js/sequence-diagram-min.js"></script>
+<style>
+.editor { 
+    width: 380px;
+    height: 600px;
+    font-size: 14px;
+}
+
+.editor-wrapper {
+    width: 380px;
+    height: 600px;
+}
+
+.inner {
+  position: relative;
+  width: 940px;
+  margin: 0 auto;
+}
+
+</style>
+
+
+<body>
+<a href="https://bramp.github.io/js-sequence-diagrams/" target="_blink">語法 / 範例</a>
+<section id="demo">
+	<table align="center" class="inner">
+		<tr>
+			<td>
+				<div class="editor-wrapper">
+					<div class="editor"></div>
+				</div>
+			</td>
+			<td class="diagram">This should be a diagram! If you don't see it you need Javascript enabled</td>
+		</tr>
+	</table>
+</section>
+
+<script type="text/javascript">
+	function setup_editor(div) {
+		var editor_div = div.find(".editor");
+		var diagram_div = div.find(".diagram");
+		var theme_div = div.find(".theme");
+		var download_link = div.find('.download');
+
+		// Setup the editor diagram
+		var editor = ace.edit(editor_div.get(0));
+		editor.setTheme("ace/theme/crimson_editor");
+		editor.getSession().setMode("ace/mode/asciidoc");
+		editor.getSession().on('change', _.debounce(on_change, 100));
+
+		on_change();
+
+		function on_change() {
+			try {
+				var diagram = Diagram.parse(editor.getValue());
+
+				editor.getSession().setAnnotations([]);
+
+				// Clear out old diagram
+				diagram_div.html('');
+
+				var options = {
+					theme: "simple",
+					scale: 1
+				};
+
+				// Draw
+				diagram.drawSVG(diagram_div.get(0), options);
+
+			} catch(err) {
+				var annotation = {
+					type: "error", // also warning and information
+					column: 0,
+					row: 0,
+					text: err.message
+				};
+				if (err instanceof Diagram.ParseError) {
+					annotation.row		= err.loc.first_line - 1;
+					annotation.column = err.loc.first_column;
+				}
+				editor.getSession().setAnnotations([annotation]);
+				throw err;
+			}
+		}
+	}
+
+	$(document).ready(function() {
+		setup_editor($('#demo'));
+	});
+</script>
+<body>
+</html>
